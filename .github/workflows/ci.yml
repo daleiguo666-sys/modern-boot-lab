@@ -29,3 +29,14 @@ jobs:
         with:
           name: test-report
           path: build/reports/tests/test/
+
+  # 第二个 job：构建 Docker 镜像。needs: build = 只有上面的编译+测试通过才跑。
+  docker-image:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -t modern-boot-lab:ci .
