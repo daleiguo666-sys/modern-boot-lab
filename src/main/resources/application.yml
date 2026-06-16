@@ -2,10 +2,14 @@ spring:
   application:
     name: modern-boot-lab
 
-  # 既然本机已用 Docker(colima) 起了真 Postgres，默认就激活 postgres profile 连真库，更贴近生产。
-  # 想退回零依赖的 H2 内存库快速跑：启动加 --spring.profiles.active=default 覆盖即可。
-  profiles:
-    active: postgres
+  # 【可复现原则】提交进 git 的默认配置必须自包含——在任何干净环境(CI、同事电脑)都能起来。
+  # 所以这里不写死 active: postgres，默认走下面 datasource 里那套 H2 内存库，零外部依赖。
+  # 本地想连真 Postgres：设环境变量 SPRING_PROFILES_ACTIVE=postgres（不进 git），
+  #   - shell:  export SPRING_PROFILES_ACTIVE=postgres
+  #   - 或 IDE 的 Run Configuration 里加这个环境变量
+  # 之前写死 active: postgres 导致 CI 连不上库挂掉——典型「在我机器上好好的」。
+  # profiles:
+  #   active: postgres
 
   # Flyway：版本化数据库迁移。启动时自动扫 db/migration 下的 V*.sql，按版本号顺序「只跑没跑过的」，
   # 并在 flyway_schema_history 表里记录每个脚本的版本/执行时间/checksum。
