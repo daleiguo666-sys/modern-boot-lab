@@ -1,0 +1,9 @@
+# 别把这些拷进构建上下文（更快、更干净）。build/ 排除掉也没事——镜像里会重新 clean bootJar。
+.git
+.gradle
+build
+.idea
+*.iml
+logs
+*.log
+.DS_Store
