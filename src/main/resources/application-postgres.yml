@@ -1,0 +1,21 @@
+# 生产/集成测试用的 Postgres profile（用 --spring.profiles.active=postgres 激活）。
+# 集成测试时 Testcontainers 的 @ServiceConnection 会覆盖这里的 url/账号密码，
+# 所以这里写不写连接信息都行；保留示例供本地连真库时参考。
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lab
+    username: lab
+    password: lab
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # 生产绝不要用 update/create：用 validate，让 Flyway/Liquibase 管 schema 变更。
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+
+  h2:
+    console:
+      enabled: false
