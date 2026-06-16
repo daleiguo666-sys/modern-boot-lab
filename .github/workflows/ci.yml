@@ -30,13 +30,43 @@ jobs:
           name: test-report
           path: build/reports/tests/test/
 
-  # 第二个 job：构建 Docker 镜像。needs: build = 只有上面的编译+测试通过才跑。
+  # 第二个 job：构建并推送 Docker 镜像到 GHCR。needs: build = 测试通过才跑。
   docker-image:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write          # 只额外授予「写镜像包」权限（最小化）
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Build Docker image
-        run: docker build -t modern-boot-lab:ci .
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # 用临时令牌 GITHUB_TOKEN 登录 GHCR，绝不硬编码长期密码。
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 自动生成镜像标签：sha-xxxx（不可变、绑定提交）+ latest（仅 main 分支）。
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # PR 只构建验证、不推镜像；push 到 main 才真正推。
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
